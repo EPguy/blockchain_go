@@ -45,7 +45,6 @@ func InitBlockChain() *BlockChain {
 			return err
 		} else {
 			lastHash = b.Get([]byte("lh"))
-
 			return err
 		}
 	})
@@ -62,7 +61,11 @@ func (chain *BlockChain) AddBlock(data string) {
 	err := chain.Database.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BlocksBucket))
 
-		err := b.Put([]byte("lh"), newBlock.Hash)
+		err := b.Put(newBlock.Hash, newBlock.Serialize())
+
+		Handle(err)
+
+		err = b.Put([]byte("lh"), newBlock.Hash)
 
 		Handle(err)
 		
@@ -80,12 +83,10 @@ func (chain *BlockChain) Iterator() *BlockChainIterator {
 
 func (iter *BlockChainIterator) Next() *Block {
 	var block *Block
-
 	err := iter.Database.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BlocksBucket))
 
 		encodedBlock := b.Get(iter.CurrentHash)
-
 		block = Deserialize(encodedBlock)
 
 		return nil
